@@ -1,0 +1,7 @@
+{
+  "name": "xiaowangriji",
+  "private": true,
+  "scripts": {
+    "pre": "pnpm --dir server install && pnpm --dir server dev"
+  }
+}

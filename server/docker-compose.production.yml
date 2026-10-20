@@ -1,0 +1,28 @@
+services:
+  diary-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xiaowang-diary-api:0.1.0
+    container_name: xiaowang-diary-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - chenxu-space-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  chenxu-space-network:
+    external: true
+    name: chenxu-space_app-network

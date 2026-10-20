@@ -1,0 +1,3 @@
+data/db.json
+data/media/*
+!data/media/.gitkeep
