@@ -1,8 +1,11 @@
 import SwiftUI
+import UIKit
 import PhotosUI
-import LocalAuthentication
 import AVKit
 import UniformTypeIdentifiers
+import Vision
+import ImageIO
+
 
 struct ContentView: View {
     @State private var selectedTab = 0
@@ -14,7 +17,7 @@ struct ContentView: View {
             TabView(selection: $selectedTab) {
                 DiaryTimelineView().tag(0).tabItem { Label("记录", systemImage: "rectangle.stack.fill") }
                 PetWallView().tag(1).tabItem { Label("宠物", systemImage: "pawprint.fill") }
-                ProfileView().tag(2).tabItem { Label("我的", systemImage: "person.crop.circle.fill") }
+                LifeMuseumView().tag(2).tabItem { Label("展览", systemImage: "photo.on.rectangle.angled") }
             }
             if selectedTab < 2 {
                 Button { composer = selectedTab == 0 ? .diary : .pet } label: {
@@ -538,6 +541,14 @@ struct ComposerMediaStrip: View {
     @Binding var selection: [PhotosPickerItem]
     @Binding var media: [ComposerMedia]
     let disabled: Bool
+    let onImageAdded: (Data) -> Void
+
+    init(selection: Binding<[PhotosPickerItem]>, media: Binding<[ComposerMedia]>, disabled: Bool, onImageAdded: @escaping (Data) -> Void = { _ in }) {
+        _selection = selection
+        _media = media
+        self.disabled = disabled
+        self.onImageAdded = onImageAdded
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -566,7 +577,10 @@ struct ComposerMediaStrip: View {
                 for item in items {
                     let kind: MediaKind = item.supportedContentTypes.contains(where: { $0.conforms(to: .movie) }) ? .video : .image
                     if let data = try? await item.loadTransferable(type: Data.self) {
-                        await MainActor.run { media.append(ComposerMedia(draft: DraftMedia(kind: kind, data: data))) }
+                        await MainActor.run {
+                            media.append(ComposerMedia(draft: DraftMedia(kind: kind, data: data)))
+                            if kind == .image { onImageAdded(data) }
+                        }
                     }
                 }
                 await MainActor.run { selection = [] }
@@ -664,6 +678,8 @@ struct DiaryEditorView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var media: [ComposerMedia]
     @State private var isSaving = false
+    @State private var isPolishing = false
+    @State private var shouldExtractImageInfo = false
     @State private var uploadCompleted = 0
     @State private var uploadTotal = 0
     @State private var errorMessage: String?
@@ -689,8 +705,20 @@ struct DiaryEditorView: View {
                     TextField("标题（选填）", text: $title).font(.title3.weight(.semibold))
                     TextEditor(text: $bodyText).frame(minHeight: 150)
                         .overlay(alignment: .topLeading) { if bodyText.isEmpty { Text("写下此刻的心情、遇见的人或值得记住的事…").foregroundStyle(.tertiary).padding(.top, 8).allowsHitTesting(false) } }
+                    Button(action: polish) {
+                        Label(isPolishing ? "正在润色…" : "AI 润色", systemImage: "sparkles")
+                    }
+                    .disabled(isSaving || isPolishing || bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                Section("图文视频") { ComposerMediaStrip(selection: $pickerItems, media: $media, disabled: isSaving) }
+                Section("图文视频") {
+                    ComposerMediaStrip(selection: $pickerItems, media: $media, disabled: isSaving) { imageData in
+                        recognizeImageInfo(imageData)
+                    }
+                    Toggle("识别新图片信息", isOn: $shouldExtractImageInfo)
+                    Text("开启后仅在本机提取图片中的文字、拍摄时间和 GPS 坐标（如有），确认上传前会追加至正文；不会把图片发给 AI。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
                 Section("分类") { Picker("分类", selection: $category) { ForEach(DiaryCategory.allCases) { Label($0.rawValue, systemImage: $0.symbol).tag($0) } }.pickerStyle(.navigationLink) }
                 Section("记录时间") { DatePicker("时间", selection: $date) }
                 if isSaving { Section { UploadProgressBanner(completed: uploadCompleted, total: uploadTotal, cancel: cancelUpload) } }
@@ -713,6 +741,28 @@ struct DiaryEditorView: View {
     private func persistDraft() {
         guard existingEntry == nil else { return }
         DiaryDraft(title: title, body: bodyText, category: category, date: date).save()
+    }
+
+    private func polish() {
+        isPolishing = true
+        Task {
+            defer { isPolishing = false }
+            do {
+                let result = try await APIClient().polishDiary(body: bodyText)
+                bodyText = result.body
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func recognizeImageInfo(_ imageData: Data) {
+        guard shouldExtractImageInfo else { return }
+        Task {
+            guard let info = await ImageInfoExtractor.extract(from: imageData) else { return }
+            let separator = bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : "\n\n"
+            bodyText += "\(separator)\(info)"
+        }
     }
 
     private func save() {
@@ -1080,8 +1130,286 @@ struct PetPostEditorView: View {
     private func cancelUpload() { saveTask?.cancel() }
 }
 
-struct ProfileView: View { @EnvironmentObject private var store: DiaryStore; @State private var faceIDMessage: String?; var body: some View { NavigationStack { List { Section { HStack(spacing: 14) { Image(systemName: "person.crop.circle.fill").font(.system(size: 54)).foregroundStyle(.orange); VStack(alignment: .leading, spacing: 3) { Text("小王").font(.headline); Text("只属于自己的生活记录本").font(.subheadline).foregroundStyle(.secondary) } }.padding(.vertical, 6) }; Section("账号与安全") { Toggle("使用 Face ID 解锁", isOn: Binding(get: { store.hasEnabledFaceID }, set: setFaceID)); Label("修改密码", systemImage: "key.fill"); Label("恢复码", systemImage: "lock.rotation") }; Section("内容") { LabeledContent("记录", value: "\(store.entries.count) 篇"); LabeledContent("宠物资源", value: "\(store.petAssets.count) 个"); Label("数据导出与备份", systemImage: "externaldrive.fill") }; Section("外观与关于") { Label("跟随系统外观", systemImage: "circle.lefthalf.filled"); LabeledContent("版本", value: "0.2.0") } }.navigationTitle("我的").alert("Face ID", isPresented: Binding(get: { faceIDMessage != nil }, set: { if !$0 { faceIDMessage = nil } })) { Button("好") { faceIDMessage = nil } } message: { Text(faceIDMessage ?? "") } } }
-    private func setFaceID(_ enabled: Bool) { guard enabled else { store.hasEnabledFaceID = false; return }; let context = LAContext(); var error: NSError?; guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else { faceIDMessage = "此设备尚未设置可用的生物识别。请在系统设置完成 Face ID 后再开启。"; return }; context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "使用 Face ID 保护你的小王日记") { success, _ in DispatchQueue.main.async { if success { store.hasEnabledFaceID = true } else { faceIDMessage = "验证未完成，Face ID 尚未开启。" } } } }
+struct LifeMuseumView: View {
+    @EnvironmentObject private var store: DiaryStore
+    @State private var selectedMedia: MediaAttachment?
+
+    private var items: [GalleryPhoto] {
+        let diaryPhotos = store.entries.flatMap { entry in
+            entry.media
+                .filter { $0.kind == .image }
+                .map { GalleryPhoto(id: "diary-\(entry.id.uuidString)-\($0.id.uuidString)", media: $0, date: entry.date) }
+        }
+        let petPhotos = store.petAssets.flatMap { asset in
+            asset.media
+                .filter { $0.kind == .image }
+                .map { GalleryPhoto(id: "pet-\(asset.id.uuidString)-\($0.id.uuidString)", media: $0, date: asset.date) }
+        }
+        return (diaryPhotos + petPhotos).sorted { $0.date > $1.date }
+    }
+
+    private var months: [GalleryMonth] {
+        let calendar = Calendar.autoupdatingCurrent
+        let grouped = Dictionary(grouping: items) { item in
+            calendar.date(from: calendar.dateComponents([.year, .month], from: item.date)) ?? item.date
+        }
+        return grouped
+            .map { GalleryMonth(date: $0.key, items: $0.value.sorted { $0.date > $1.date }) }
+            .sorted { $0.date > $1.date }
+    }
+
+    private var images: [MediaAttachment] { items.map(\.media) }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if months.isEmpty {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(.tertiary)
+                } else {
+                    GeometryReader { proxy in
+                        let contentWidth = max(0, proxy.size.width - 36)
+
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 34) {
+                                ForEach(months) { month in
+                                    GalleryMonthSection(month: month, contentWidth: contentWidth) { media in
+                                        selectedMedia = media
+                                    }
+                                }
+                            }
+                            .frame(width: contentWidth, alignment: .leading)
+                            .padding(.top, 22)
+                            .padding(.bottom, 36)
+                        }
+                        .frame(width: proxy.size.width)
+                        .scrollIndicators(.hidden)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(red: 0.965, green: 0.957, blue: 0.937))
+            .toolbar(.hidden, for: .navigationBar)
+            .fullScreenCover(item: $selectedMedia) { media in
+                FullScreenMediaViewer(
+                    media: images,
+                    initialID: media.id,
+                    fallbackSymbol: "photo.fill",
+                    tint: .orange
+                )
+            }
+        }
+    }
+}
+
+private struct GalleryPhoto: Identifiable {
+    let id: String
+    let media: MediaAttachment
+    let date: Date
+}
+
+private struct GalleryMonth: Identifiable {
+    let date: Date
+    let items: [GalleryPhoto]
+    var id: Date { date }
+
+    var title: String {
+        date.formatted(.dateTime.locale(Locale(identifier: "zh_CN")).year().month())
+    }
+}
+
+private struct GalleryMonthSection: View {
+    let month: GalleryMonth
+    let contentWidth: CGFloat
+    let select: (MediaAttachment) -> Void
+    @State private var aspectRatios: [String: CGFloat] = [:]
+
+    private var rows: [[GalleryPhoto]] {
+        var result: [[GalleryPhoto]] = []
+        var current: [GalleryPhoto] = []
+        var totalAspect: CGFloat = 0
+        let targetAspect: CGFloat = contentWidth > 390 ? 2.7 : 2.35
+
+        for item in month.items {
+            let aspect = aspectRatios[item.id] ?? 1
+            current.append(item)
+            totalAspect += aspect
+            if totalAspect >= targetAspect {
+                result.append(current)
+                current = []
+                totalAspect = 0
+            }
+        }
+        if !current.isEmpty { result.append(current) }
+        return result
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text(month.title)
+                .font(.subheadline.weight(.regular))
+                .foregroundStyle(Color(red: 0.56, green: 0.55, blue: 0.52))
+                .padding(.leading, 1)
+
+            VStack(alignment: .leading, spacing: 18) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, row in
+                    GalleryPhotoRow(
+                        items: row,
+                        availableWidth: contentWidth,
+                        isLastRow: rowIndex == rows.indices.last,
+                        aspectRatios: aspectRatios,
+                        select: select,
+                        updateAspectRatio: updateAspectRatio
+                    )
+                }
+            }
+        }
+        .frame(width: contentWidth, alignment: .leading)
+        .animation(.smooth(duration: 0.25), value: aspectRatios)
+    }
+
+    private func updateAspectRatio(_ ratio: CGFloat, for id: String) {
+        guard ratio.isFinite, ratio > 0, aspectRatios[id] != ratio else { return }
+        aspectRatios[id] = ratio
+    }
+}
+
+private struct GalleryPhotoRow: View {
+    let items: [GalleryPhoto]
+    let availableWidth: CGFloat
+    let isLastRow: Bool
+    let aspectRatios: [String: CGFloat]
+    let select: (MediaAttachment) -> Void
+    let updateAspectRatio: (CGFloat, String) -> Void
+    private let spacing: CGFloat = 10
+
+    private var totalAspect: CGFloat { items.reduce(0) { $0 + (aspectRatios[$1.id] ?? 1) } }
+    private var rowHeight: CGFloat {
+        let fullWidthHeight = max(76, (availableWidth - CGFloat(max(0, items.count - 1)) * spacing) / max(totalAspect, 0.1))
+        return isLastRow ? min(fullWidthHeight, 156) : min(fullWidthHeight, 190)
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: spacing) {
+            ForEach(items) { item in
+                let ratio = aspectRatios[item.id] ?? 1
+                let width = max(56, rowHeight * ratio)
+                Button { select(item.media) } label: {
+                    PinnedPhoto(
+                        media: item.media,
+                        date: item.date,
+                        width: width,
+                        imageHeight: rowHeight,
+                        rotation: paperRotation(for: item.id),
+                        verticalOffset: paperOffset(for: item.id),
+                        onAspectRatio: { updateAspectRatio($0, item.id) }
+                    )
+                }
+                .buttonStyle(.plain)
+                .frame(width: width)
+            }
+        }
+        .frame(width: availableWidth, alignment: .leading)
+    }
+
+    private func paperRotation(for id: String) -> Angle {
+        let values: [Double] = [-1.45, 0.9, -0.65, 1.2, -1.0, 0.55]
+        return .degrees(values[stableIndex(for: id, count: values.count)])
+    }
+
+    private func paperOffset(for id: String) -> CGFloat {
+        let values: [CGFloat] = [2, -1, 1, -2, 0, 1]
+        return values[stableIndex(for: id, count: values.count)]
+    }
+
+    private func stableIndex(for id: String, count: Int) -> Int {
+        abs(id.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }) % count
+    }
+}
+
+private struct PinnedPhoto: View {
+    let media: MediaAttachment
+    let date: Date
+    let width: CGFloat
+    let imageHeight: CGFloat
+    let rotation: Angle
+    let verticalOffset: CGFloat
+    let onAspectRatio: (CGFloat) -> Void
+
+    private var dateText: String {
+        let components = Calendar.autoupdatingCurrent.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d.%02d.%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            GalleryRemoteImage(media: media, onAspectRatio: onAspectRatio)
+                .frame(width: width - 12, height: imageHeight)
+                .padding(.horizontal, 6)
+                .padding(.top, 6)
+                .background(.white)
+
+            Text(dateText)
+                .font(.system(size: 9, weight: .medium, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Color(red: 0.54, green: 0.53, blue: 0.50))
+                .frame(width: width, height: 28)
+                .background(.white)
+        }
+        .rotationEffect(rotation)
+        .offset(y: verticalOffset)
+        .shadow(color: .black.opacity(0.045), radius: 2, y: 1)
+        .accessibilityLabel("打开 \(dateText) 的照片")
+    }
+}
+
+private struct GalleryRemoteImage: View {
+    let media: MediaAttachment
+    let onAspectRatio: (CGFloat) -> Void
+    @State private var image: UIImage?
+    @State private var didFail = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if didFail || media.remoteURL == nil {
+                Image(systemName: "photo.fill")
+                    .font(.title3)
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(uiColor: .secondarySystemBackground))
+            } else {
+                ProgressView()
+                    .tint(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(uiColor: .secondarySystemBackground))
+            }
+        }
+        .task(id: media.remoteURL) {
+            await loadImage()
+        }
+    }
+
+    @MainActor
+    private func loadImage() async {
+        guard image == nil, !didFail, let url = media.remoteURL.flatMap(URL.init(string:)) else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let downloadedImage = UIImage(data: data), downloadedImage.size.height > 0 else {
+                didFail = true
+                return
+            }
+            image = downloadedImage
+            onAspectRatio(downloadedImage.size.width / downloadedImage.size.height)
+        } catch {
+            didFail = true
+        }
+    }
 }
 
 #Preview { ContentView().environmentObject(DiaryStore()) }

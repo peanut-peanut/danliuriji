@@ -54,3 +54,29 @@ test('纯文字日记可发布且不需要媒体', async () => {
     assert.deepEqual((await response.json()).data.media, []);
   });
 });
+
+test('AI 润色转发内容、验证输入且不暴露服务端密钥', async () => {
+  const calls = [];
+  const aiClient = {
+    async polish(input) {
+      calls.push(input);
+      return { body: '润色后的正文' };
+    }
+  };
+  const dataDirectory = await mkdtemp(join(tmpdir(), 'xiaowang-diary-ai-'));
+  const server = await createApiServer({ dataDirectory, mediaStorage: new MemoryMediaStorage(), aiClient });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const api = `http://127.0.0.1:${server.address().port}/api`;
+  try {
+    let response = await fetch(`${api}/ai/polish`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ body: '原文' }) });
+    assert.equal(response.status, 200);
+    assert.deepEqual((await response.json()).data, { body: '润色后的正文' });
+    assert.deepEqual(calls, [{ body: '原文' }]);
+
+    response = await fetch(`${api}/ai/polish`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ body: '' }) });
+    assert.equal(response.status, 400);
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    await rm(dataDirectory, { recursive: true, force: true });
+  }
+});

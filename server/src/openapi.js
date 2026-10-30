@@ -5,6 +5,7 @@ export const openApi = {
   paths: {
     '/health': { get: { summary: '健康检查', responses: { 200: { description: '服务可用' } } } },
     '/pets': { get: { summary: '宠物档案', responses: { 200: { description: '蛋黄与六六' } } } },
+    '/ai/polish': { post: { summary: '使用 DeepSeek 润色日记正文', description: '仅发送用户主动选择润色的正文；服务端需配置 DEEPSEEK_API_KEY。', responses: { 200: { description: '润色后的 body' }, 503: { description: 'AI 未配置' } } } },
     '/diary-entries': { get: { summary: '日记列表', parameters: [{ name: 'category', in: 'query' }], responses: { 200: { description: '日记数组' } } }, post: { summary: '创建日记', responses: { 201: { description: '已创建' } } } },
     '/diary-entries/{id}': { get: { summary: '日记详情', responses: { 200: { description: '日记' } } }, patch: { summary: '修改日记', responses: { 200: { description: '已更新' } } }, delete: { summary: '删除日记', responses: { 204: { description: '已删除' } } } },
     '/media': { post: { summary: '上传一个图片或视频', description: '请求体为原始文件；使用 Content-Type 和 X-Filename 请求头。', responses: { 201: { description: '媒体对象，可用于创建日记或宠物资源' } } } },

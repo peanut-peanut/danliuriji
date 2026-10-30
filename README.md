@@ -45,9 +45,21 @@ pnpm start
 - `GET /pets`：蛋黄、六六的档案
 - `GET|POST /diary-entries`、`GET|PATCH|DELETE /diary-entries/:id`：日记
 - `POST /media`：原始图片/视频上传，传入 `Content-Type` 及 `X-Filename`
+- `POST /ai/polish`：通过 DeepSeek 润色日记正文
 - `GET|POST /pet-assets`、`DELETE /pet-assets/:id`：宠物资源墙（支持 `petId`、`kind=image|video` 筛选）
 
 开发期的数据保存在 `server/data/db.json`，上传的媒体保存在 `server/data/media/`，均被 Git 忽略。生产环境建议将 JSON Store 替换为 PostgreSQL / MySQL，并将媒体存储替换为 OSS；在服务暴露到公网前，必须配置网络访问控制或加入设备令牌认证。
+
+### DeepSeek AI 润色
+
+复制 `server/.env.example` 为 `server/.env`，仅在服务端填写 Key（本地运行时会自动读取，Docker 部署也会通过 `env_file` 读取）：
+
+```bash
+DEEPSEEK_API_KEY=你的_DeepSeek_API_Key
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+iOS 端的“AI 润色”只会将用户主动选择润色的正文发送到你的服务端，由服务端转发给 DeepSeek；Key 不会写入 App 或 Git。图片信息识别使用 iOS Vision 与 ImageIO 在本机完成，可在发布页选择是否开启；其提取的文字、拍摄时间与 GPS 坐标仅会在用户确认上传时写入日记。
 
 运行 API 测试：
 

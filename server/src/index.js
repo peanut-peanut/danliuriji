@@ -6,6 +6,10 @@ import { HttpError, assertISODate, assertMediaIDs, assertObject, assertPetIDs, a
 import { createMediaStorageFromEnvironment, withMediaURL } from './media-storage.js';
 import { LocalMediaStorage } from './local-media-storage.js';
 import { openApi } from './openapi.js';
+import { createDeepSeekClient } from './ai.js';
+import { loadOptionalEnvFile } from './env.js';
+
+loadOptionalEnvFile();
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url));
 const defaultDataDirectory = join(moduleDirectory, '..', 'data');
@@ -15,8 +19,9 @@ const pets = [
 ];
 const diaryCategories = new Set(['日常', '运动', '阅读', '投资', '饮食']);
 
-export async function createApiServer({ dataDirectory = defaultDataDirectory, mediaStorage } = {}) {
+export async function createApiServer({ dataDirectory = defaultDataDirectory, mediaStorage, aiClient } = {}) {
   const storage = mediaStorage || configuredMediaStorage(dataDirectory);
+  const ai = aiClient || createDeepSeekClient();
   const store = await new JsonStore(join(dataDirectory, 'db.json')).load();
   const present = (record) => presentMedia(record, storage);
   const server = createServer(async (request, response) => {
@@ -30,6 +35,11 @@ export async function createApiServer({ dataDirectory = defaultDataDirectory, me
       if (method === 'GET' && path === `${base}/health`) return sendJson(response, 200, { ok: true, service: 'xiaowang-diary-api', mediaStorage: storage.kind || 'oss', timestamp: new Date().toISOString() });
       if (method === 'GET' && path === `${base}/openapi.json`) return sendJson(response, 200, openApi);
       if (method === 'GET' && path === `${base}/pets`) return sendJson(response, 200, { data: pets });
+      if (method === 'POST' && path === `${base}/ai/polish`) {
+        const body = assertObject(await readJson(request));
+        const content = assertString(body.body, 'body', { maxLength: 20_000 });
+        return sendJson(response, 200, { data: await ai.polish({ body: content }) });
+      }
       if (method === 'GET' && path.startsWith(`${base}/media/`) && storage instanceof LocalMediaStorage) {
         const filePath = decodeURIComponent(path.slice(`${base}/media/`.length));
         const bytes = await storage.read(filePath);

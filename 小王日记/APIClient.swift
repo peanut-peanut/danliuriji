@@ -48,6 +48,10 @@ struct APIClient {
         return try await request(url: components.url!, method: "GET")
     }
 
+    func polishDiary(body: String) async throws -> AIPolishResult {
+        try await request(path: "ai/polish", method: "POST", body: AIPolishPayload(body: body))
+    }
+
     func createDiary(title: String, body: String, category: DiaryCategory, date: Date, drafts: [DraftMedia], uploadProgress: @escaping (Int, Int) -> Void = { _, _ in }) async throws -> DiaryEntry {
         let media = try await upload(drafts, progress: uploadProgress)
         let payload = DiaryWritePayload(title: title, body: body, category: category.rawValue, date: date.apiTimestamp, isFavorite: false, mediaIds: media.map(\.id))
@@ -141,6 +145,8 @@ struct APIClient {
     private var decoder: JSONDecoder { let value = JSONDecoder(); value.dateDecodingStrategy = .iso8601; return value }
 }
 
+struct AIPolishResult: Decodable { let body: String }
+private struct AIPolishPayload: Encodable { let body: String }
 private struct DiaryWritePayload: Encodable { let title: String; let body: String; let category: String; let date: String; let isFavorite: Bool; let mediaIds: [UUID] }
 private struct PetAssetWritePayload: Encodable { let petIds: [String]; let mediaIds: [UUID] }
 private struct AnyEncodable: Encodable { private let encodeClosure: (Encoder) throws -> Void; init(_ value: some Encodable) { encodeClosure = value.encode }; func encode(to encoder: Encoder) throws { try encodeClosure(encoder) } }
