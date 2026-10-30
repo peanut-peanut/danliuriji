@@ -1,104 +1,61 @@
 # 蛋六日记
 
-一个 iOS 18+ 的私密生活记录与宠物成长相册首版，采用 SwiftUI 构建。
+一本给自己写的日记，也是蛋黄和六六的非官方传记。
 
-项目英文名为 `danliuriji`，iOS 工程与 App 显示名为“蛋六日记”，Bundle Identifier 为 `com.danliu.diary`，后端包名与容器名为 `danliuriji-api`。
+SwiftUI · iOS 18+ · Node.js
 
-改名后的 Bundle Identifier 会使 iOS 将其作为新 App 安装；旧 App 的本机草稿、头像和偏好设置不会自动迁移。服务端已有日记和媒体数据保持原样，旧媒体仍按数据库记录的路径访问，新上传媒体使用 `danliuriji/media/` 前缀。Docker 配置中的镜像与容器名称需在下次部署时生效。
+## 里面有什么
 
-## 已实现
-- 日常、运动、阅读、投资、饮食五类日记的筛选与搜索
-- 新建、编辑、收藏、删除与 `UserDefaults` 本地持久化
-- 蛋黄与六六的档案、生日、年龄和关联记录
-- Face ID 开关与系统授权流程（真实设备验证）
-- iPhone 12 起的自适应原生界面；最小系统版本 iOS 18
+- **记录**：文字、照片、视频，支持分类、搜索和收藏。
+- **宠物**：蛋黄和六六的档案与专属相册。
+- **展览**：按月整理照片，日子翻过去，照片留下来。
+- **写作辅助**：DeepSeek 润色正文；在本机识别图片文字、拍摄时间和坐标，按需开启。
 
-## 真机运行
-1. 使用 Xcode 打开 `/Users/wangchenxu/danliuriji/蛋六日记.xcodeproj`。
-2. 选择“蛋六日记”Target，在 **Signing & Capabilities** 中选择你的开发团队。
-3. 将 Bundle Identifier 改为你账户下唯一的标识符，例如 `com.<你的名字>.danliuriji`。
-4. 连接 iPhone，选择目标设备后运行。
+## 跑起来
 
-当前媒体方格与头像为系统图标占位；收到 App 图标和宠物照片后替换资源即可。账号注册、云同步、相册视频导入将在服务端与安全策略确认后接入，当前版本不会保存明文账号密码。
+需要 Xcode、Node.js 20+ 和 pnpm。
 
-## 保存后自动刷新模拟器
+启动后端：
 
-在项目根目录执行：
+```bash
+cd server
+pnpm install
+cp .env.example .env  # 首次配置；已有 .env 时跳过
+pnpm dev
+```
+
+用 Xcode 打开 `蛋六日记.xcodeproj`，选择“蛋六日记”Scheme 和 iOS 模拟器运行。真机运行前，选择自己的签名团队，并把 `APIBaseURL` 改为手机可访问的后端地址。
+
+Debug 默认连接 `http://127.0.0.1:3000/api`。真机上的 `127.0.0.1` 是手机自己。
+
+在项目根目录运行以下脚本，可监听保存并自动重建、安装到 `iPhone 18 Pro` 模拟器：
 
 ```bash
 ./scripts/watch-simulator.sh
 ```
 
-脚本会启动 `iPhone 18 Pro` 模拟器，并在每次保存 `蛋六日记` 目录中的 Swift 或资源文件后，自动重新构建、安装并重启 App。按 `Ctrl-C` 停止监听。此方式会保留 App 的本地数据，但会重启正在展示的页面。
+## 配置与数据
 
-对于单个 SwiftUI 视图的即时调样式，可在 Xcode 打开 Canvas 并使用 Preview；它不会替代完整 App 的功能验证。
+- **AI 润色**：在 `server/.env` 填入 `DEEPSEEK_API_KEY`。密钥只留在服务端，点击润色时才发送正文。
+- **媒体**：本地开发保存到 `server/data/media/`；生产使用 OSS，配置项见 `server/.env.example`。
+- **日记数据**：保存在 `server/data/db.json`。数据与 `.env` 不入库，备份请另行安排。
+- **访问控制**：当前没有登录，部署到公网前需在网关限制访问。
 
-## 后端 API（无登录单用户模式）
-
-后端在 [`/Users/wangchenxu/danliuriji/server`](/Users/wangchenxu/danliuriji/server)；当前不接登录，适用于本地开发或部署到你私有、受访问控制的服务器。
-
-```bash
-cd /Users/wangchenxu/danliuriji/server
-pnpm start
-```
-
-默认地址为 `http://localhost:3000/api`：
-
-- `GET /health`：健康检查
-- `GET /openapi.json`：OpenAPI 契约
-- `GET /pets`：蛋黄、六六的档案
-- `GET|POST /diary-entries`、`GET|PATCH|DELETE /diary-entries/:id`：日记
-- `POST /media`：原始图片/视频上传，传入 `Content-Type` 及 `X-Filename`
-- `POST /ai/polish`：通过 DeepSeek 润色日记正文
-- `GET|POST /pet-assets`、`DELETE /pet-assets/:id`：宠物资源墙（支持 `petId`、`kind=image|video` 筛选）
-
-开发期的数据保存在 `server/data/db.json`，上传的媒体保存在 `server/data/media/`，均被 Git 忽略。生产环境建议将 JSON Store 替换为 PostgreSQL / MySQL，并将媒体存储替换为 OSS；在服务暴露到公网前，必须配置网络访问控制或加入设备令牌认证。
-
-### DeepSeek AI 润色
-
-复制 `server/.env.example` 为 `server/.env`，仅在服务端填写 Key（本地运行时会自动读取，Docker 部署也会通过 `env_file` 读取）：
+接口说明：启动后访问 `/api/openapi.json`。运行后端测试：
 
 ```bash
-DEEPSEEK_API_KEY=你的_DeepSeek_API_Key
-DEEPSEEK_MODEL=deepseek-chat
+pnpm --dir server test
 ```
 
-iOS 端的“AI 润色”只会将用户主动选择润色的正文发送到你的服务端，由服务端转发给 DeepSeek；Key 不会写入 App 或 Git。图片信息识别使用 iOS Vision 与 ImageIO 在本机完成，可在发布页选择是否开启；其提取的文字、拍摄时间与 GPS 坐标仅会在用户确认上传时写入日记。
-
-运行 API 测试：
-
-```bash
-cd /Users/wangchenxu/danliuriji/server
-pnpm test
-```
-
-## iOS API 环境路由
-
-原生 iOS 没有浏览器开发服务器，因此不使用 Web Proxy。App 从 `Info.plist` 的 `APIBaseURL` 读取后端地址：
-
-- **Debug**：`http://127.0.0.1:3000/api`，仅供 iOS 模拟器与本机 API 联调；Debug 才允许 HTTP。
-- **Release / Archive**：使用 `$(PRODUCTION_API_BASE_URL)`；没有传入生产 HTTPS 地址时不会默默打包本机地址。
-
-构建生产包时必须明确注入真实 API 域名，例如：
+## 打包
 
 ```bash
 xcodebuild archive \
-  -project /Users/wangchenxu/danliuriji/蛋六日记.xcodeproj \
+  -project 蛋六日记.xcodeproj \
   -scheme 蛋六日记 \
   -configuration Release \
   -archivePath /tmp/蛋六日记.xcarchive \
   PRODUCTION_API_BASE_URL=https://diary-api.peanutwcx.xyz/api
 ```
 
-当前生产 API 已部署为 `https://diary-api.peanutwcx.xyz/api`。如未来迁移服务器，可在 Archive 命令中覆盖该值。不要把 `127.0.0.1` 用于真机或 Release 包：真机中的 `127.0.0.1` 指向手机自身，并不是开发电脑。
-
-## 媒体存储（OSS）
-
-生产 API 的图片和视频上传到 Alibaba Cloud OSS；数据库只保存 `filePath`，格式如下：
-
-```text
-danliuriji/media/YYYY/MM/DD/<uuid>.<extension>
-```
-
-接口响应会根据该路径生成 HTTPS 访问 URL。Bucket 未配置自定义公开域名时，返回的是有效期 1 小时的 OSS 签名 URL；数据持久化不依赖这个临时 URL。删除宠物资源时，API 会同步删除其关联的 OSS 对象。
-
+Bundle ID 为 `com.danliu.diary`。从旧版安装到新版会被视为新 App，本机草稿与偏好不会自动迁移；服务端记录和历史媒体仍可读取。
