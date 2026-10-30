@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		A10000000000000000000001 /* 小王日记.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "小王日记.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000001 /* 蛋六日记.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "蛋六日记.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A10000000000000000000002 /* 小王日记 */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "小王日记"; sourceTree = "<group>"; };
+		A10000000000000000000002 /* 蛋六日记 */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "蛋六日记"; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -28,7 +28,7 @@
 		A10000000000000000000003 = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000002 /* 小王日记 */,
+				A10000000000000000000002 /* 蛋六日记 */,
 				A10000000000000000000004 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -36,7 +36,7 @@
 		A10000000000000000000004 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000001 /* 小王日记.app */,
+				A10000000000000000000001 /* 蛋六日记.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -44,9 +44,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10000000000000000000005 /* 小王日记 */ = {
+		A10000000000000000000005 /* 蛋六日记 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A10000000000000000000006 /* Build configuration list for PBXNativeTarget "小王日记" */;
+			buildConfigurationList = A10000000000000000000006 /* Build configuration list for PBXNativeTarget "蛋六日记" */;
 			buildPhases = (
 				A10000000000000000000007 /* Sources */,
 				A10000000000000000000008 /* Frameworks */,
@@ -57,13 +57,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				A10000000000000000000002 /* 小王日记 */,
+				A10000000000000000000002 /* 蛋六日记 */,
 			);
-			name = "小王日记";
+			name = "蛋六日记";
 			packageProductDependencies = (
 			);
-			productName = "小王日记";
-			productReference = A10000000000000000000001 /* 小王日记.app */;
+			productName = "蛋六日记";
+			productReference = A10000000000000000000001 /* 蛋六日记.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -81,7 +81,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A10000000000000000000011 /* Build configuration list for PBXProject "小王日记" */;
+			buildConfigurationList = A10000000000000000000011 /* Build configuration list for PBXProject "蛋六日记" */;
 			compatibilityVersion = "Xcode 16.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -96,7 +96,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A10000000000000000000005 /* 小王日记 */,
+				A10000000000000000000005 /* 蛋六日记 */,
 			);
 		};
 /* End PBXProject section */
@@ -169,7 +169,7 @@
 				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.xiaowang.diary;
+				PRODUCT_BUNDLE_IDENTIFIER = com.danliu.diary;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -194,7 +194,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				MARKETING_VERSION = 0.1.0;
 				PRODUCTION_API_BASE_URL = "https://diary-api.peanutwcx.xyz/api";
-				PRODUCT_BUNDLE_IDENTIFIER = com.xiaowang.diary;
+				PRODUCT_BUNDLE_IDENTIFIER = com.danliu.diary;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -208,7 +208,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A10000000000000000000006 /* Build configuration list for PBXNativeTarget "小王日记" */ = {
+		A10000000000000000000006 /* Build configuration list for PBXNativeTarget "蛋六日记" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10000000000000000000014 /* Debug */,
@@ -217,7 +217,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A10000000000000000000011 /* Build configuration list for PBXProject "小王日记" */ = {
+		A10000000000000000000011 /* Build configuration list for PBXProject "蛋六日记" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A10000000000000000000012 /* Debug */,

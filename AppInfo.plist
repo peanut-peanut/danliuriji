@@ -17,7 +17,7 @@
 	<key>APIBaseURL</key>
 	<string>$(API_BASE_URL)</string>
 	<key>CFBundleDisplayName</key>
-	<string>小王日记</string>
+	<string>蛋六日记</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.lifestyle</string>
 	<key>NSFaceIDUsageDescription</key>

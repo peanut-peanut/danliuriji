@@ -1,6 +1,6 @@
 export const openApi = {
   openapi: '3.1.0',
-  info: { title: '小王日记 API', version: '0.1.0', description: '单用户、无登录的私有日记与宠物资源 API。生产部署前应在反向代理或下一版本加入访问控制。' },
+  info: { title: '蛋六日记 API', version: '0.1.0', description: '单用户、无登录的私有日记与宠物资源 API。生产部署前应在反向代理或下一版本加入访问控制。' },
   servers: [{ url: '/api' }],
   paths: {
     '/health': { get: { summary: '健康检查', responses: { 200: { description: '服务可用' } } } },

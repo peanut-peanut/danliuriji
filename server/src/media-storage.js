@@ -88,7 +88,7 @@ function mediaKind(contentType) {
 
 function objectPath(id, extension, now) {
   const date = now.toISOString().slice(0, 10).replaceAll('-', '/');
-  return `xiaowang-diary/media/${date}/${id}${extension}`;
+  return `danliuriji/media/${date}/${id}${extension}`;
 }
 
 function safeExtension(originalName, contentType) {

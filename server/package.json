@@ -1,8 +1,8 @@
 {
-  "name": "xiaowang-diary-api",
+  "name": "danliuriji-api",
   "version": "0.1.0",
   "private": true,
-  "description": "无登录模式下的小王日记本地 API",
+  "description": "无登录模式下的蛋六日记本地 API",
   "type": "module",
   "scripts": {
     "dev": "node --watch src/index.js",

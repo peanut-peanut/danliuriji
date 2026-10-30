@@ -1,6 +1,10 @@
-# 小王日记
+# 蛋六日记
 
 一个 iOS 18+ 的私密生活记录与宠物成长相册首版，采用 SwiftUI 构建。
+
+项目英文名为 `danliuriji`，iOS 工程与 App 显示名为“蛋六日记”，Bundle Identifier 为 `com.danliu.diary`，后端包名与容器名为 `danliuriji-api`。
+
+改名后的 Bundle Identifier 会使 iOS 将其作为新 App 安装；旧 App 的本机草稿、头像和偏好设置不会自动迁移。服务端已有日记和媒体数据保持原样，旧媒体仍按数据库记录的路径访问，新上传媒体使用 `danliuriji/media/` 前缀。Docker 配置中的镜像与容器名称需在下次部署时生效。
 
 ## 已实现
 - 日常、运动、阅读、投资、饮食五类日记的筛选与搜索
@@ -10,9 +14,9 @@
 - iPhone 12 起的自适应原生界面；最小系统版本 iOS 18
 
 ## 真机运行
-1. 使用 Xcode 打开 `/Users/wangchenxu/xiaowangriji/小王日记.xcodeproj`。
-2. 选择“小王日记”Target，在 **Signing & Capabilities** 中选择你的开发团队。
-3. 将 Bundle Identifier 改为你账户下唯一的标识符，例如 `com.<你的名字>.xiaowangriji`。
+1. 使用 Xcode 打开 `/Users/wangchenxu/danliuriji/蛋六日记.xcodeproj`。
+2. 选择“蛋六日记”Target，在 **Signing & Capabilities** 中选择你的开发团队。
+3. 将 Bundle Identifier 改为你账户下唯一的标识符，例如 `com.<你的名字>.danliuriji`。
 4. 连接 iPhone，选择目标设备后运行。
 
 当前媒体方格与头像为系统图标占位；收到 App 图标和宠物照片后替换资源即可。账号注册、云同步、相册视频导入将在服务端与安全策略确认后接入，当前版本不会保存明文账号密码。
@@ -25,16 +29,16 @@
 ./scripts/watch-simulator.sh
 ```
 
-脚本会启动 `iPhone 18 Pro` 模拟器，并在每次保存 `小王日记` 目录中的 Swift 或资源文件后，自动重新构建、安装并重启 App。按 `Ctrl-C` 停止监听。此方式会保留 App 的本地数据，但会重启正在展示的页面。
+脚本会启动 `iPhone 18 Pro` 模拟器，并在每次保存 `蛋六日记` 目录中的 Swift 或资源文件后，自动重新构建、安装并重启 App。按 `Ctrl-C` 停止监听。此方式会保留 App 的本地数据，但会重启正在展示的页面。
 
 对于单个 SwiftUI 视图的即时调样式，可在 Xcode 打开 Canvas 并使用 Preview；它不会替代完整 App 的功能验证。
 
 ## 后端 API（无登录单用户模式）
 
-后端在 [`/Users/wangchenxu/xiaowangriji/server`](/Users/wangchenxu/xiaowangriji/server)；当前不接登录，适用于本地开发或部署到你私有、受访问控制的服务器。
+后端在 [`/Users/wangchenxu/danliuriji/server`](/Users/wangchenxu/danliuriji/server)；当前不接登录，适用于本地开发或部署到你私有、受访问控制的服务器。
 
 ```bash
-cd /Users/wangchenxu/xiaowangriji/server
+cd /Users/wangchenxu/danliuriji/server
 pnpm start
 ```
 
@@ -64,7 +68,7 @@ iOS 端的“AI 润色”只会将用户主动选择润色的正文发送到你�
 运行 API 测试：
 
 ```bash
-cd /Users/wangchenxu/xiaowangriji/server
+cd /Users/wangchenxu/danliuriji/server
 pnpm test
 ```
 
@@ -79,10 +83,10 @@ pnpm test
 
 ```bash
 xcodebuild archive \
-  -project /Users/wangchenxu/xiaowangriji/小王日记.xcodeproj \
-  -scheme 小王日记 \
+  -project /Users/wangchenxu/danliuriji/蛋六日记.xcodeproj \
+  -scheme 蛋六日记 \
   -configuration Release \
-  -archivePath /tmp/小王日记.xcarchive \
+  -archivePath /tmp/蛋六日记.xcarchive \
   PRODUCTION_API_BASE_URL=https://diary-api.peanutwcx.xyz/api
 ```
 
@@ -93,7 +97,7 @@ xcodebuild archive \
 生产 API 的图片和视频上传到 Alibaba Cloud OSS；数据库只保存 `filePath`，格式如下：
 
 ```text
-xiaowang-diary/media/YYYY/MM/DD/<uuid>.<extension>
+danliuriji/media/YYYY/MM/DD/<uuid>.<extension>
 ```
 
 接口响应会根据该路径生成 HTTPS 访问 URL。Bucket 未配置自定义公开域名时，返回的是有效期 1 小时的 OSS 签名 URL；数据持久化不依赖这个临时 URL。删除宠物资源时，API 会同步删除其关联的 OSS 对象。

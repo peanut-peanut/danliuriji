@@ -36,7 +36,7 @@ struct ContentView: View {
 struct DiaryTimelineView: View {
     @EnvironmentObject private var store: DiaryStore
     @State private var category: DiaryCategory?
-    @AppStorage("xiaowang.diary.layout") private var layoutRawValue = ContentLayout.list.rawValue
+    @AppStorage("danliu.diary.layout") private var layoutRawValue = ContentLayout.list.rawValue
     @State private var selectedEntry: DiaryEntry?
     private var layout: ContentLayout { ContentLayout(rawValue: layoutRawValue) ?? .list }
     private var entries: [DiaryEntry] { store.entries.filter { category == nil || $0.category == category } }
@@ -795,7 +795,7 @@ struct DiaryEditorView: View {
 struct PetWallView: View {
     @EnvironmentObject private var store: DiaryStore
     @State private var selectedPet: PetID?
-    @AppStorage("xiaowang.pet.layout") private var layoutRawValue = ContentLayout.waterfall.rawValue
+    @AppStorage("danliu.pet.layout") private var layoutRawValue = ContentLayout.waterfall.rawValue
     @State private var filter: PetAssetFilter = .all
     private var layout: ContentLayout { ContentLayout(rawValue: layoutRawValue) ?? .waterfall }
 
@@ -914,7 +914,7 @@ struct PetAvatar: View {
     }
 
     private static func avatarKey(for pet: PetID) -> String {
-        "xiaowang.pet.avatar.\(pet.rawValue)"
+        "danliu.pet.avatar.\(pet.rawValue)"
     }
 
     var body: some View {

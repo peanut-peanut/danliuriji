@@ -3,8 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: xiaowang-diary-api:0.1.0
-    container_name: xiaowang-diary-api
+    image: danliuriji-api:0.1.0
+    container_name: danliuriji-api
     restart: unless-stopped
     env_file:
       - .env

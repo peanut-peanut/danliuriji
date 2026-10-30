@@ -9,7 +9,7 @@ final class DiaryStore: ObservableObject {
     @Published var hasEnabledFaceID: Bool { didSet { UserDefaults.standard.set(hasEnabledFaceID, forKey: faceIDKey) } }
 
     private let client = APIClient()
-    private let faceIDKey = "xiaowang.diary.faceid.v1"
+    private let faceIDKey = "danliu.diary.faceid.v1"
 
     init() {
         hasEnabledFaceID = UserDefaults.standard.bool(forKey: faceIDKey)

@@ -21,7 +21,7 @@ export class LocalMediaStorage {
     if (!extension) throw new HttpError(415, '仅支持 JPEG、PNG、HEIC、WebP、MP4 或 MOV 文件');
     const id = randomUUID();
     const date = now.toISOString().slice(0, 10).replaceAll('-', '/');
-    const filePath = `xiaowang-diary/media/${date}/${id}${extension}`;
+    const filePath = `danliuriji/media/${date}/${id}${extension}`;
     const destination = this.absolutePath(filePath);
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, bytes);

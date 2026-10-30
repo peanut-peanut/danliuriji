@@ -32,7 +32,7 @@ export async function createApiServer({ dataDirectory = defaultDataDirectory, me
       const method = request.method;
       const base = '/api';
 
-      if (method === 'GET' && path === `${base}/health`) return sendJson(response, 200, { ok: true, service: 'xiaowang-diary-api', mediaStorage: storage.kind || 'oss', timestamp: new Date().toISOString() });
+      if (method === 'GET' && path === `${base}/health`) return sendJson(response, 200, { ok: true, service: 'danliuriji-api', mediaStorage: storage.kind || 'oss', timestamp: new Date().toISOString() });
       if (method === 'GET' && path === `${base}/openapi.json`) return sendJson(response, 200, openApi);
       if (method === 'GET' && path === `${base}/pets`) return sendJson(response, 200, { data: pets });
       if (method === 'POST' && path === `${base}/ai/polish`) {
@@ -172,5 +172,5 @@ function sortByDate(left, right) { return new Date(right.date) - new Date(left.d
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 3000);
   const server = await createApiServer();
-  server.listen(port, '0.0.0.0', () => console.log(`小王日记 API 已启动：http://localhost:${port}/api`));
+  server.listen(port, '0.0.0.0', () => console.log(`蛋六日记 API 已启动：http://localhost:${port}/api`));
 }

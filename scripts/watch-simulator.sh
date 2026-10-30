@@ -1,15 +1,15 @@
 #!/bin/bash
-# 保存 SwiftUI 源码或资源后，自动重建、安装并打开小王日记。
+# 保存 SwiftUI 源码或资源后，自动重建、安装并打开蛋六日记。
 # 停止监听：在本终端按 Ctrl-C。
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_PATH="$ROOT_DIR/小王日记.xcodeproj"
-SCHEME="小王日记"
-BUNDLE_IDENTIFIER="com.xiaowang.diary"
+PROJECT_PATH="$ROOT_DIR/蛋六日记.xcodeproj"
+SCHEME="蛋六日记"
+BUNDLE_IDENTIFIER="com.danliu.diary"
 DERIVED_DATA_PATH="$ROOT_DIR/.DerivedData"
 SIMULATOR_NAME="${SIMULATOR_NAME:-iPhone 18 Pro}"
-SOURCE_DIR="$ROOT_DIR/小王日记"
+SOURCE_DIR="$ROOT_DIR/蛋六日记"
 
 ensure_simulator() {
   if ! xcrun simctl list devices | grep -q '(Booted)'; then
@@ -31,9 +31,9 @@ build_and_launch() {
     CODE_SIGNING_ALLOWED=NO \
     | tail -n 20
 
-  xcrun simctl install booted "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/小王日记.app"
+  xcrun simctl install booted "$DERIVED_DATA_PATH/Build/Products/Debug-iphonesimulator/蛋六日记.app"
   xcrun simctl launch --terminate-running-process booted "$BUNDLE_IDENTIFIER"
-  echo "✓ 已刷新小王日记；继续监听保存。"
+  echo "✓ 已刷新蛋六日记；继续监听保存。"
 }
 
 source_signature() {

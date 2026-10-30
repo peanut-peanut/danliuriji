@@ -9,7 +9,7 @@ class MemoryMediaStorage {
   constructor() { this.objects = new Map(); this.removed = []; this.sequence = 0; }
   async upload({ bytes, contentType, originalName }) {
     const id = `media-${++this.sequence}`;
-    const media = { id, kind: contentType.startsWith('image/') ? 'image' : 'video', filePath: `xiaowang-diary/media/2026/10/${id}.jpg`, originalName, contentType, byteSize: bytes.length, createdAt: '2026-10-13T00:00:00.000Z' };
+    const media = { id, kind: contentType.startsWith('image/') ? 'image' : 'video', filePath: `danliuriji/media/2026/10/${id}.jpg`, originalName, contentType, byteSize: bytes.length, createdAt: '2026-10-13T00:00:00.000Z' };
     this.objects.set(media.filePath, bytes);
     return media;
   }
@@ -18,7 +18,7 @@ class MemoryMediaStorage {
 }
 
 async function withApi(run) {
-  const dataDirectory = await mkdtemp(join(tmpdir(), 'xiaowang-diary-api-'));
+  const dataDirectory = await mkdtemp(join(tmpdir(), 'danliuriji-api-'));
   const storage = new MemoryMediaStorage();
   const server = await createApiServer({ dataDirectory, mediaStorage: storage });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -32,7 +32,7 @@ test('媒体上传 OSS 路径并保存 filePath，资源删除同步清理对象
     let response = await fetch(`${api}/media`, { method: 'POST', headers: { 'content-type': 'image/jpeg', 'x-filename': 'cat.jpg' }, body: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]) });
     assert.equal(response.status, 201);
     const media = (await response.json()).data;
-    assert.match(media.filePath, /^xiaowang-diary\/media\/\d{4}\/\d{2}\//);
+    assert.match(media.filePath, /^danliuriji\/media\/\d{4}\/\d{2}\//);
     assert.match(media.url, /^https:\/\/oss\.example\.test\//);
     assert.equal('filename' in media, false);
 
@@ -63,7 +63,7 @@ test('AI 润色转发内容、验证输入且不暴露服务端密钥', async ()
       return { body: '润色后的正文' };
     }
   };
-  const dataDirectory = await mkdtemp(join(tmpdir(), 'xiaowang-diary-ai-'));
+  const dataDirectory = await mkdtemp(join(tmpdir(), 'danliuriji-ai-'));
   const server = await createApiServer({ dataDirectory, mediaStorage: new MemoryMediaStorage(), aiClient });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const api = `http://127.0.0.1:${server.address().port}/api`;

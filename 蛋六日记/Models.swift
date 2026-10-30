@@ -262,7 +262,7 @@ struct DiaryDraft: Codable, Equatable {
     var category: DiaryCategory = .everyday
     var date: Date = .now
 
-    static let storageKey = "xiaowang.diary.composer-draft.v1"
+    static let storageKey = "danliu.diary.composer-draft.v1"
 
     static func load() -> DiaryDraft? {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else { return nil }
