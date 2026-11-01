@@ -79,10 +79,10 @@ fi
 
 # 先验证 SSH 连接和 Docker 前提，避免在传输后才发现环境不满足。
 ssh -o BatchMode=yes -o ConnectTimeout=10 "$DEPLOY_HOST" \
-  "docker network inspect chenxu-space_app-network >/dev/null && docker info >/dev/null"
+  'docker network inspect chenxu-space_app-network >/dev/null && docker info >/dev/null && (docker compose version >/dev/null 2>&1 || docker-compose version >/dev/null 2>&1)'
 
 printf '上传服务端发布包…\n'
-tar -C "$SERVER_DIR" \
+COPYFILE_DISABLE=1 tar -C "$SERVER_DIR" \
   --exclude='./node_modules' \
   --exclude='./.env' \
   --exclude='./data' \
@@ -118,6 +118,15 @@ rollback() {
 }
 trap rollback EXIT
 
+if docker compose version >/dev/null 2>&1; then
+  COMPOSE=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+  COMPOSE=(docker-compose)
+else
+  echo "服务器未安装 Docker Compose。" >&2
+  exit 1
+fi
+
 mkdir -p "$APP_DIR/releases" "$DATA_DIR" "$APP_DIR/backups"
 mkdir -p "$BACKUP_DIR"
 
@@ -147,7 +156,7 @@ tar -xzf "$ARCHIVE" -C "$RELEASE_DIR"
 ln -sfn ../../data "$RELEASE_DIR/data"
 ln -sfn ../../.env "$RELEASE_DIR/.env"
 
-docker compose -f "$RELEASE_DIR/docker-compose.production.yml" config -q
+"${COMPOSE[@]}" -f "$RELEASE_DIR/docker-compose.production.yml" config -q
 
 # 记住当前健康服务；只有新容器健康后才永久停用它。出错会由 trap 重启。
 if docker inspect -f '{{.State.Running}}' danliuriji-api 2>/dev/null | grep -qx true; then
@@ -161,7 +170,7 @@ if [[ -n "$ACTIVE_CONTAINER" ]]; then
 fi
 
 echo "构建并启动 danliuriji-api…"
-docker compose -f "$RELEASE_DIR/docker-compose.production.yml" up -d --build
+"${COMPOSE[@]}" -f "$RELEASE_DIR/docker-compose.production.yml" up -d --build
 
 for _ in $(seq 1 30); do
   health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' danliuriji-api 2>/dev/null || true)"
