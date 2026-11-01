@@ -47,6 +47,24 @@ Debug 默认连接 `http://127.0.0.1:3000/api`。真机上的 `127.0.0.1` 是手
 pnpm --dir server test
 ```
 
+## 发布到生产环境
+
+在项目根目录执行以下任一命令即可发布服务端：
+
+```bash
+pnpm run deploy
+# 或
+npm run deploy
+```
+
+命令会显示发布目标并要求确认，随后备份服务器上的环境变量和日记数据，构建新镜像、切换 API，并检查 HTTPS 健康接口。用于 CI 或已确认的非交互发布时：
+
+```bash
+pnpm run deploy:yes
+```
+
+生产密钥和日记数据只保存在服务器，不会从本机上传。首次执行会从旧的 `xiaowang-diary-api` 服务迁移它们。
+
 ## 打包
 
 ```bash

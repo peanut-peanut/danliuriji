@@ -2,6 +2,8 @@
   "name": "danliuriji",
   "private": true,
   "scripts": {
-    "pre": "pnpm --dir server install && pnpm --dir server dev"
+    "pre": "pnpm --dir server install && pnpm --dir server dev",
+    "deploy": "./scripts/deploy-production.sh",
+    "deploy:yes": "./scripts/deploy-production.sh --yes"
   }
 }
